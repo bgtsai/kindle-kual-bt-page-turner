@@ -12,7 +12,7 @@ All Bluetooth and page-turn functionality comes from Lucas Zampieri's [kindle-hi
 - removes everything with one tap, and gives a USB rescue for a Kindle that can't reach the library
 - ships kernel modules for Kindle Oasis 2 firmware 5.13.5 (upstream has none for that build)
 
-> **Tested on:** scripts tested in the cloud only, **not on a real Kindle yet**. Target: Kindle Oasis 2, firmware 5.13.5. Other models upstream supports should work too — see [Notes for AI](#notes-for-ai).
+> **Tested on:** Kindle Oasis 2, firmware 5.13.5 (build 371676), with a programmable two-key Bluetooth keyboard: KUAL install, opening the pairing and key-mapping apps from KUAL, and page turns in the native reader are verified (2026-11-05). Other models upstream supports should work too — see [Notes for AI](#notes-for-ai).
 
 ## Requirements
 
@@ -31,10 +31,34 @@ Updating: copy the new version the same way and tap **Install / update** again. 
 
 ## First use (once)
 
-1. KUAL ▸ 藍牙翻頁器 ▸ **Pair**: opens the pairing app. Put the remote in pairing mode, tap it in the list, pair.
-2. KUAL ▸ 藍牙翻頁器 ▸ **Key mapping**: press the remote button you want as "next page" and pick Kindle's next page; do the same for "previous page".
+### 0. Choose what the remote sends (only for programmable remotes / mini keyboards)
 
-From then on the remote connects by itself when it is switched on (while the Bluetooth daemon runs).
+Suggested: **next-page button = Page Down, previous-page button = Page Up**. Any key works (step 2 records whatever you press); these two just won't type characters into a search box if the mapper isn't running. Non-programmable page turners: use them as they are.
+
+### 1. Pair
+
+1. Put the remote in pairing mode (usually hold a button until the light blinks fast — see its manual).
+2. KUAL ▸ 藍牙翻頁器 ▸ **Pair**: KUAL closes and the pairing app (BT Manager) opens.
+3. Scan, tap your remote in the list, pair. If the same device shows up as both BLE and Classic, try BLE first.
+
+### 2. Choose which button turns the page
+
+1. KUAL ▸ 藍牙翻頁器 ▸ **Key mapping** opens Mapper Manager.
+2. **Bindings** tab ▸ **+ Add** ▸ **Capture btn**, then press the remote button for "next page".
+3. In the action list, pick the **Kindle** tab ▸ **next page** (`next_page`).
+4. Again: **+ Add** ▸ **Capture btn** ▸ press the "previous page" button ▸ **Kindle** tab ▸ **previous page** (`prev_page`).
+
+Notes:
+- **Don't** pick Page Up / Page Down from the **Keyboard** tab: that sends another key, it doesn't turn the page.
+- `next_page_tap` / `prev_page_tap` (a tap near the screen edges) are only for when the plain page turn does nothing.
+- If you also read in KOReader, use the **Auto** tab's next / previous page: it sends the right command for whichever reader is on screen.
+- **One press turns two pages**: in the **Device** tab, set the remote to exclusive (grab).
+
+### Everyday use
+
+- While the Bluetooth daemon runs, the remote connects by itself when switched on — no re-pairing.
+- Start on boot is **off** by default: after a reboot, tap KUAL ▸ 藍牙翻頁器 ▸ **Start** first, or turn on Start on boot.
+- The key-mapping daemon (upstream design) starts at every boot regardless of that switch; it is lightweight and just waits for input.
 
 ## Menu
 
@@ -74,7 +98,7 @@ Not covered: if the Kindle is broken badly enough that the USB drive doesn't sho
 
 - While the Bluetooth daemon runs, the Kindle's own Bluetooth (Audible) can't be used (upstream limitation).
 - Battery use with the daemon always running, and whether the remote still works right after waking from sleep, aren't tested yet.
-- Opening the pairing / key-mapping apps from KUAL is untested upstream; if it doesn't work, report with `diagnose.txt`.
+- Copying to the Kindle: if small files copy but files of a few MB hang and the Kindle drive keeps disconnecting and reconnecting, it's usually the USB cable — try another one (this happened).
 
 ## Uninstall
 

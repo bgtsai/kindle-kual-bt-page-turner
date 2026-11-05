@@ -6,7 +6,7 @@ The user's goal is ease of use for non-technical people: copy a folder, tap a KU
 
 ## Status
 
-- v0.1.0 (2026-11-05): first version. Cloud-tested only (busybox sh with a fake upstream installer and stubbed `mntroot`/`lipc-set-prop`/`stop`): install → modules added, library books and upstream KUAL entry removed, kill switch inserted into both upstart jobs (idempotent), autostart on/off, uninstall; the inserted pre-start lines run and stop before upstream's boot counter. **Never run on a device.**
+- v0.1.0 (2026-11-05): first version. Cloud-tested only (busybox sh with a fake upstream installer and stubbed `mntroot`/`lipc-set-prop`/`stop`): install → modules added, library books and upstream KUAL entry removed, kill switch inserted into both upstart jobs (idempotent), autostart on/off, uninstall; the inserted pre-start lines run and stop before upstream's boot counter. **Device-verified 2026-11-05** on the user's Oasis 2 (5.13.5, build 371676) with a programmable two-key BT keyboard: KUAL install OK; our `uhid/uinput-…-371676-zelda.ko` loaded first by upstream (`/dev/uhid` present); BCM takeover (`bsa_server` → `/dev/ttymxc2`, HCI Reset OK); mapper found the page buttons at `/dev/input/event4` (gpio-keys); BTManager / MapperManager open fine from KUAL; Kindle-tab `next_page`/`prev_page` turn pages in the native reader. Not yet checked: sleep/wake, behaviour after reboot with start on boot on, double page turns.
 - Upstream pinned in `.github/workflows/release.yml`: kindle-hid-passthrough v3.19.0 (sha256 checked), bundled button mapper v1.8.0. The release zip = `kindle/` + upstream release unpacked into `extensions/bt-page-turner/upstream/` + LICENSE/notices. Both upstream source archives are attached to each release.
 
 ## Layout
@@ -39,10 +39,10 @@ kindle/extensions/bt-page-turner/      = what goes to the Kindle (release adds u
 
 | Part | Where | What to check |
 | --- | --- | --- |
-| uhid/uinput modules | `modules/`, `add_modules` | `kernel modules` section: `/dev/uhid` exists after Start, `uhid` in /proc/modules. Upstream loads `{mod}-{uname -r}-{build}-{codename}.ko`, exact build first, then other builds of the same codename. Other firmware: build a matching module (`docs/uhid-build.md`) or rely on upstream's. **Unverified on device.** |
+| uhid/uinput modules | `modules/`, `add_modules` | `kernel modules` section: `/dev/uhid` exists after Start, `uhid` in /proc/modules. Upstream loads `{mod}-{uname -r}-{build}-{codename}.ko`, exact build first, then other builds of the same codename. Other firmware: build a matching module (`docs/uhid-build.md`) or rely on upstream's. Verified on 5.13.5 / 371676. |
 | BT chip takeover | upstream | `bluetooth hardware`: `/dev/ttymxc2` (Broadcom, 8th–10th gen) or `/dev/stpbt` (MediaTek); `hid_passthrough.log`. |
 | Kill switch line | `common.sh` `patch_upstart` | `upstart jobs` section says "kill switch present" for both jobs. Relies on upstream's confs having a `pre-start script` line. |
-| Opening the WAF apps from KUAL | `pair.sh`, `mapping.sh` | **Unverified**: upstream only launches them from library books (Hotfix scriptlets). |
+| Opening the WAF apps from KUAL | `pair.sh`, `mapping.sh` | Verified on 5.13.5 (upstream itself only launches them from library books). |
 | Pillow alert text | `common.sh` `alert` | English only; Chinese untested. |
 
 ## After editing
