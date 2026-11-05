@@ -1,0 +1,74 @@
+# config.xml 的版本還沒有 Release 時：把上游 kindle-hid-passthrough 的固定版本（內含
+# kindle-button-mapper）解進插件的 upstream/，連同授權檔打包成 bt-page-turner.zip 發布。
+# 為什麼用 Actions：Claude 雲端環境不能建 tag／Release（知識庫 27 第 9 條）。
+# 上游二進位檔不進 git，只在 Release 裡；兩個上游的原始碼封存也一起附在 Release（GPL-3.0）。
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ['kindle/**', '.github/workflows/release.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # 換上游版本：改這三行（sha256 用 `sha256sum` 算下載的檔案）
+  KHP_TAG: v3.19.0
+  KHP_SHA256: 61ad422737962bb1d52dde6756e49c0643755962dddb958305ae1b239b3dd33d
+  KBM_TAG: v1.8.0   # 上游 v3.19.0 內附的 button mapper 版本（button-mapper/VERSION）
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: ver
+        run: |
+          v=$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' kindle/extensions/bt-page-turner/config.xml | head -1)
+          [ -n "$v" ] || { echo "version not found"; exit 1; }
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if release exists
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.ver.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=1" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.ver.outputs.tag }} already exists, skipping."
+          fi
+
+      - name: Fetch upstream
+        if: steps.check.outputs.exists != '1'
+        run: |
+          set -e
+          curl -fsSL -o khp.tar.xz "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/$KHP_TAG/kindle-hid-passthrough-armv7.tar.xz"
+          echo "$KHP_SHA256  khp.tar.xz" | sha256sum -c -
+          [ "$(tar -xJOf khp.tar.xz ./button-mapper/VERSION)" = "$KBM_TAG" ] || { echo "bundled button mapper is not $KBM_TAG"; exit 1; }
+          curl -fsSL -o "kindle-hid-passthrough-$KHP_TAG-source.tar.gz" "https://github.com/zampierilucas/kindle-hid-passthrough/archive/refs/tags/$KHP_TAG.tar.gz"
+          curl -fsSL -o "kindle-button-mapper-rs-$KBM_TAG-source.tar.gz" "https://github.com/zampierilucas/kindle-button-mapper-rs/archive/refs/tags/$KBM_TAG.tar.gz"
+
+      - name: Build zip
+        if: steps.check.outputs.exists != '1'
+        run: |
+          set -e
+          E=kindle/extensions/bt-page-turner
+          mkdir -p $E/upstream && tar -xJf khp.tar.xz -C $E/upstream
+          chmod 755 $E/bin/*.sh
+          # 授權文字隨二進位檔一起散布（GPL-3.0 要求）
+          cp LICENSE THIRD_PARTY_NOTICES.md $E/
+          cd kindle && zip -qr ../bt-page-turner.zip extensions
+
+      - name: Create release
+        if: steps.check.outputs.exists != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" bt-page-turner.zip \
+            "kindle-hid-passthrough-$KHP_TAG-source.tar.gz" "kindle-button-mapper-rs-$KBM_TAG-source.tar.gz" \
+            --title "bt-page-turner ${{ steps.ver.outputs.tag }}" \
+            --notes "Download **bt-page-turner.zip**, unzip it, and copy the \`extensions\` folder to the root of your Kindle drive. Then KUAL ▸ 藍牙翻頁器 ▸ Install / update. See README. Includes kindle-hid-passthrough $KHP_TAG and kindle-button-mapper $KBM_TAG (GPL-3.0, by Lucas Zampieri); their source code is attached."

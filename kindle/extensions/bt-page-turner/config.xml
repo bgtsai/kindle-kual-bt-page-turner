@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension>
+	<information>
+		<name>Bluetooth Page Turner</name>
+		<version>0.1.0</version>
+		<author>bgtsai</author>
+		<id>bt-page-turner</id>
+	</information>
+	<menus>
+		<menu type="json" dynamic="true">menu.json</menu>
+	</menus>
+</extension>

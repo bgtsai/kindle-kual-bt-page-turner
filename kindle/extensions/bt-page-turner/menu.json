@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "name": "藍牙翻頁器",
+      "priority": 0,
+      "items": [
+        { "name": "安裝／更新 (Install / update)", "priority": 1, "action": "./bin/install.sh" },
+        { "name": "配對藍牙裝置 (Pair)", "priority": 2, "action": "./bin/pair.sh" },
+        { "name": "設定按鍵對應 (Key mapping)", "priority": 3, "action": "./bin/mapping.sh" },
+        { "name": "啟動藍牙 (Start)", "priority": 4, "action": "./bin/daemon.sh", "params": "start" },
+        { "name": "停止藍牙 (Stop)", "priority": 5, "action": "./bin/daemon.sh", "params": "stop" },
+        { "name": "開機自動啟動：開 (Start on boot: on)", "priority": 6, "action": "./bin/autostart.sh", "params": "on" },
+        { "name": "開機自動啟動：關 (Start on boot: off)", "priority": 7, "action": "./bin/autostart.sh", "params": "off" },
+        { "name": "Diagnose (write diagnose.txt)", "priority": 8, "action": "./bin/diagnose.sh" },
+        { "name": "全部移除 (Uninstall everything)", "priority": 9, "action": "./bin/uninstall.sh" }
+      ]
+    }
+  ]
+}
